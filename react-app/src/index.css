@@ -1,0 +1,118 @@
+@import "tailwindcss";
+@import 'animate.css';
+
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+@keyframes gradient-background {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  /* Custom gradient background animation */
+  @layer utilities {
+    .animate-background {
+      background: linear-gradient(45deg, #0078D4, #FF9900, #0078D4);
+      background-size: 400% 400%;
+      animation: gradient-background 5s ease infinite;
+    }
+  }
+  
+  @layer utilities {
+    @keyframes slide-down {
+      0% {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  
+    .animate-slide-down {
+      animation: slide-down 0.8s ease-out forwards;
+    }
+  
+    @keyframes fade-in {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+  
+    .animate-fade-in {
+      animation: fade-in 1s ease-in forwards;
+    }
+  
+    .delay-200 {
+      animation-delay: 0.2s;
+    }
+  }
+  
+  @layer utilities {
+    /* Slide Down Animation */
+    @keyframes slide-down {
+      0% {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-slide-down {
+      animation: slide-down 0.8s ease-out forwards;
+    }
+  
+    /* Fade In */
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    .animate-fade-in {
+      animation: fade-in 1s ease-in-out forwards;
+    }
+  
+    /* Animated Background */
+    @keyframes gradient-move {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+  
+    .bg-animated {
+      background: linear-gradient(
+        270deg,
+        #ffedd5,
+        #fef9c3,
+        #e0f2fe,
+        #dbeafe,
+        #ffe4e6
+      );
+      background-size: 400% 400%;
+      animation: gradient-move 12s ease infinite;
+    }
+  }
+  
