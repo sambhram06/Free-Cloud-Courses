@@ -1,15 +1,15 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FaUserShield, FaRobot, FaBrain, FaClipboardCheck, FaChartLine,
   FaUserTie, FaUsers, FaDatabase, FaCode, FaServer, FaNetworkWired,
-  FaUserSecret, FaBalanceScale, FaUserGraduate, FaLock, FaSearch,
-  FaBookReader, FaShieldAlt, FaHandsHelping, FaCogs, FaLightbulb,
-  FaChalkboardTeacher, FaLifeRing, FaPenFancy, FaProjectDiagram
+  FaBalanceScale, FaUserGraduate, FaLock, FaSearch,
+  FaBookReader, FaHandsHelping, FaCogs, FaChalkboardTeacher,
+  FaLifeRing, FaPenFancy, FaProjectDiagram,FaTools
 } from 'react-icons/fa';
 import { MdPrivacyTip } from 'react-icons/md';
-import { BsPersonWorkspace, BsRocketTakeoff } from 'react-icons/bs';
+import { BsRocketTakeoff } from 'react-icons/bs';
 import { AiOutlineSolution } from 'react-icons/ai';
-import { useEffect, useState } from 'react';
  
 const roleIcons = {
   "administrator": <FaUserShield className="text-5xl text-sky-600" />,
@@ -45,6 +45,7 @@ const roleIcons = {
   "ip-admin":<MdPrivacyTip className="text-5xl text-sky-600" />,
   "maker": <FaClipboardCheck className="text-5xl text-sky-600" />,
   "parent-guardian": <FaBookReader className="text-5xl text-sky-600" />,
+  "platform-engineer": <FaTools className="text-5xl text-sky-600" />,
 };
  
 export default function CareerPaths() {

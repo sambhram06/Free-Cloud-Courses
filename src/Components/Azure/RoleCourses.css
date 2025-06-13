@@ -3,7 +3,7 @@
     cursor: pointer;
     border-radius: 0.75rem;
     overflow: hidden;
-    height: 230px;
+    height: 250px;
     position: relative;
   }
    
@@ -32,7 +32,7 @@
     background-color: #fff;
     padding: 1rem;
     box-sizing: border-box;
-    border-bottom: 5px solid #f15645;
+    border-bottom: 5px solid #1995FF;
    
    
   }

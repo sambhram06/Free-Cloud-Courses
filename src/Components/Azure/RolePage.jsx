@@ -4,12 +4,22 @@ import './RoleCourses.css';
 import { div } from 'framer-motion/m';
 import Footer from '../Nav/Footer';
 import NavbarAzu from '../Nav/NavbarAzu';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+ 
  
 function normalizeRoleName(role) {
   return role.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
  
+function formatDuration(minutes) {
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hrs > 0 ? `${hrs}h ` : ''}${mins}min`;
+}
+ 
 export default function RoleCourses() {
+  const { user } = useAuth();
   const { roleName } = useParams();
   const [content, setContent] = useState([]);
   const [filteredContent, setFilteredContent] = useState([]);
@@ -21,6 +31,7 @@ export default function RoleCourses() {
   const [selectedType, setSelectedType] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 9;
+ 
  
   useEffect(() => {
     async function fetchContent() {
@@ -39,7 +50,12 @@ export default function RoleCourses() {
           .filter(path =>
             path.roles?.some(role => normalizeRoleName(role) === normalizedRole)
           )
-          .map(path => ({ ...path, type: 'learningPath' }));
+          .map(path => {
+            const modules = path.modules?.map(uid =>
+              data.modules.find(mod => mod.uid === uid)
+            ).filter(Boolean);
+            return { ...path, type: 'learningPath', modules };
+          });
  
         const combinedContent = [...roleModules, ...roleLearningPaths];
  
@@ -82,6 +98,7 @@ export default function RoleCourses() {
     }));
   };
  
+ 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-[#20629b]">
@@ -93,14 +110,20 @@ export default function RoleCourses() {
     );
   }
  
+ 
+ 
+ 
   return (
     <div>
       <NavbarAzu />
       <div className="mt-10">
         <h2>
-          <span className="p-3 ml-30 text-[#f15645] text-2xl mt-6 mb-8 font-bold font-sans">I</span>{' '}
+          <span className="p-3 ml-30 text-black text-2xl mt-6 mb-8 font-bold font-sans">I</span>{' '}
           <span className="text-2xl text-[#20629b] mt-6 mb-8 font-bold font-sans">
-            Courses for {roleName.replace(/-/g, ' ')}
+            Courses for {roleName
+              .replace(/-/g, ' ')
+              .replace(/\b\w/g, c => c.toUpperCase())
+              .replace(/\bAi\b/, 'AI')}
           </span>
         </h2>
  
@@ -175,62 +198,107 @@ export default function RoleCourses() {
         ) : (
           <>
             <div style={{ fontFamily: "Roboto, sans-serif" }} className="grid grid-cols-1 p-3 ml-30 mr-30 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedContent.map(item => (
-                <div
-                  key={item.uid}
-                  className="flip-card h-[300px]"
-                  onClick={() => toggleFlip(item.uid)}
-                >
-                  <div className={`flip-card-inner flip-card:hover ${flippedCards[item.uid] ? 'rotate' : ''}`}>
-                    <div className="flip-card-front">
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="text-lg font-semibold mb-2 text-[#55555] hover:underline block"
-                      >
-                        {item.title}
-                      </a>
-                      <p className="text-sm text-gray-600 mt-1 mb-2">
-                        {item.type === 'module' ? `🕒 Duration: ${item.duration_in_minutes} min` : ' Learning Path'}
-                      </p>
-                      {item.rating && (
-                        <p className="text-sm text-[#d0b92b] mb-2">
-                          ☆ Rating: {item.rating?.average || 0} ({item.rating?.count || 0})
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-1 text-xs mb-1">
-                        {item.products?.slice(0, 3).map(product => (
-                          <span key={product} className="bg-blue-50 text-[#20629b] mt-2 px-2 py-1 rounded-full">{product}</span>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-1 text-xs">
-                        {item.levels?.map(level => (
-                          <span key={level} className="bg-green-50 mt-2 text-[#009ba7] px-2 py-1 rounded-full">{level}</span>
-                        ))}
-                      </div>
-                    </div>
+              {paginatedContent.map(item => {
+                const duration = item.type === 'module'
+                  ? item.duration_in_minutes
+                  : item.modules?.reduce((sum, m) => sum + (m.duration_in_minutes || 0), 0) || 0;
  
-                    <div className="flip-card-back">
-                      <h4 className="text-md font-semibold text-[#20629b] mb-2">Description</h4>
-                      <p className="text-sm text-gray-700 line-clamp-6 mb-4">{item.summary}</p>
-                      {item.units && (
-                        <p className="text-sm text-gray-600 mb-4">🗂️ {item.units?.length || 0} Units</p>
-                      )}
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="mt-auto text-sm font-semibold text-[#20629b] underline"
-                      >
-                        Go to Course →
-                      </a>
+                return (
+                  <div
+                    key={item.uid}
+                    className="flip-card h-[300px]"
+                    onClick={() => toggleFlip(item.uid)}
+                  >
+                    <div className={`flip-card-inner flip-card:hover ${flippedCards[item.uid] ? 'rotate' : ''}`}>
+                      <div className="flip-card-front">
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="text-lg font-semibold mb-2 text-[#55555] hover:underline block"
+                        >
+                          {item.title}
+                        </a>
+                        <p className="text-sm text-gray-600 mt-3 mb-2">
+                          🕒 {formatDuration(duration)}
+                        </p>
+ 
+                        <div className="flex flex-wrap gap-1 text-xs mb-1">
+                          {item.products?.slice(0, 3).map(product => (
+                            <span key={product} className="bg-blue-50 text-[#20629b] mt-2 px-2 py-1 rounded-full">{product}</span>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1 text-xs">
+                          {item.levels?.map(level => (
+                            <span key={level} className="bg-green-50 mt-2 text-[#009ba7] px-2 py-1 rounded-full">{level}</span>
+                          ))}
+                        </div>
+                      </div>
+ 
+                      <div className="flip-card-front flex flex-col justify-between p-4 h-full">
+                        <div className="flex items-center gap-3 mb-2">
+                          <img
+                            src={item.icon_url}
+                            alt="Module Icon"
+                            className="w-10 h-10 object-contain"
+                          />
+                          <a
+                            href={user ? item.url : "/loginazure"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-md font-semibold text-[#20629b] hover:underline"
+                          >
+                            {item.title}
+                          </a>
+                        </div>
+ 
+                        <p className="text-sm text-gray-500 mt-3 mb-3">
+                          🕒 {formatDuration(duration)}
+                        </p>
+ 
+                        <div className="flex flex-wrap gap-2 text-xs mb-2">
+                          {[...(item.products?.slice(0, 2) || []), ...(item.levels || [])].map((label, index) => (
+                            <span
+                              key={`${label}-${index}`}
+                              className={`px-2 py-1 rounded-full ${item.levels?.includes(label)
+                                ? 'bg-green-50 text-[#009ba7]'
+                                : 'bg-blue-50 text-[#20629b]'
+                                }`}
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+ 
+                        <p className="text-sm text-gray-600 mt-auto pt-2 border-t border-gray-200 line-clamp-2">
+                          {item.summary}
+                        </p>
+                      </div>
+ 
+                      <div className="flip-card-back flex flex-col justify-between p-4 h-full overflow-y-auto">
+                        <div>
+                          <h4 className="text-md font-semibold text-[#20629b] mb-2">Description</h4>
+                          <p className="text-sm text-gray-700 mb-4">{item.summary}</p>
+                          {item.units && (
+                            <p className="text-sm text-gray-600 mb-4">🗂️ {item.units.length} Units</p>
+                          )}
+                        </div>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="mt-auto text-sm font-semibold text-[#20629b] underline"
+                        >
+                          Go to Course →
+                        </a>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
  
             <div className="mt-6 flex justify-center mb-10 p-5 items-center gap-4">
@@ -257,4 +325,3 @@ export default function RoleCourses() {
     </div>
   );
 }
- 

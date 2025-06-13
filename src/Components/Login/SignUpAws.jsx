@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import NavbarAWS from '../Nav/NavbarAWS';
 import Footer from '../Nav/Footer';
 import { CognitoUserPool, CognitoUser } from 'amazon-cognito-identity-js';
-import { poolData } from '../awsConfig'; 
-
-
+import { poolData } from '../awsConfig';
+ 
+ 
 const SignUpAws = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -13,33 +13,48 @@ const SignUpAws = () => {
     password: '',
     confirmPassword: '',
   });
-
+ 
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [isCodeSent, setIsCodeSent] = useState(false); 
+  const [isCodeSent, setIsCodeSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
   const navigate = useNavigate();
-
+ 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
+  const { name, value } = e.target;
+ 
+  if (name === 'name') {
+    const valid = /^[a-z0-9._]+$/.test(value); // Only lowercase letters allowed
+    if (!valid && value.length > 0) {
+      setUsernameError('Username can only contain lowercase letters, numbers, . or _');
+    } else {
+      setUsernameError('');
     }
-
-    setError('');
-
+  }
+ 
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+ 
+  const handleSubmit = (e) => {
+  e.preventDefault();
+ 
+  if (usernameError) {
+    setError('Please enter a valid username');
+    return;
+  }
+ 
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match');
+    return;
+  }
+ 
     const userPool = new CognitoUserPool(poolData);
-
+ 
     userPool.signUp(
       formData.email,
       formData.password,
@@ -60,34 +75,34 @@ const SignUpAws = () => {
           setError(err.message || 'Signup failed');
           return;
         }
-
+ 
         console.log('User signed up:', result);
         setSubmitted(true);
-        setIsCodeSent(true); 
+        setIsCodeSent(true);
       }
     );
   };
-
+ 
   const handleVerificationSubmit = (e) => {
     e.preventDefault();
-
+ 
     const userPool = new CognitoUserPool(poolData);
     const cognitoUser = new CognitoUser({ Username: formData.email, Pool: userPool });
-
+ 
     cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
       if (err) {
         console.error('Verification error:', err);
         setError(err.message || 'Verification failed');
         return;
       }
-
+ 
       console.log('User verified:', result);
       setIsVerified(true);
-      setIsCodeSent(false); 
-      navigate('/loginaws'); 
+      setIsCodeSent(false);
+      navigate('/loginaws');
     });
   };
-
+ 
   return (
     <div>
       <NavbarAWS />
@@ -105,14 +120,14 @@ const SignUpAws = () => {
           className="bg-white shadow-[0px_5px_15px_rgba(0,0,0,0.3)] p-8 rounded-lg w-full max-w-md"
         >
           <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
-
+ 
           {submitted && (
             <p className="text-green-600 mb-4 text-center">
               Signup successful! Please check your email for the verification code.
             </p>
           )}
           {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-
+ 
           {!isCodeSent && (
             <>
               <h2 className="text-1xl font-bold ">Username</h2>
@@ -125,18 +140,34 @@ const SignUpAws = () => {
                 className="w-full mb-4 px-4 py-2 border-0 border-b-2 border-gray-300 focus:border-black focus:outline-none transition duration-200"
                 required
               />
-
-              <h2 className="text-1xl font-bold ">Email</h2>
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your Email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full mb-4 px-4 py-2 border-0 border-b-2 border-gray-300 focus:border-black focus:outline-none transition duration-200"
-                required
-              />
-
+              {usernameError && <p className="text-red-600 text-sm mb-2">{usernameError}</p>}
+{formData.name.length > 0 && !usernameError && (
+  <p className="text-sm mb-4 text-gray-600 font-bold">
+    <span className="text-red-600">*</span> Course access email:{' '}
+    <span className="text-gray-500 font-semibold">
+      {formData.name.includes(' ')
+        ? formData.name.split(' ').join('_')
+        : formData.name}
+      @freecloudcourses.com
+    </span>
+  </p>
+)}
+ 
+ 
+ 
+ 
+ 
+<h2 className="text-1xl font-bold">Email</h2>
+<input
+  type="email"
+  name="email"
+  placeholder="Enter your Email"
+  value={formData.email}
+  onChange={handleChange}
+  className="w-full mb-2 px-4 py-2 border-0 border-b-2 border-gray-300 focus:border-black focus:outline-none transition duration-200"
+  required
+/>
+ 
               <h2 className="text-1xl font-bold ">Password</h2>
               <input
                 type="password"
@@ -147,7 +178,7 @@ const SignUpAws = () => {
                 className="w-full mb-4 px-4 py-2 border-0 border-b-2 border-gray-300 focus:border-black focus:outline-none transition duration-200"
                 required
               />
-
+ 
               <h2 className="text-1xl font-bold ">Confirm Password</h2>
               <input
                 type="password"
@@ -158,7 +189,7 @@ const SignUpAws = () => {
                 className="w-full mb-4 px-4 py-2 border-0 border-b-2 border-gray-300 focus:border-black focus:outline-none transition duration-200"
                 required
               />
-
+ 
               <button
                 type="submit"
                 className="w-full bg-yellow-600 text-black font-bold py-2 rounded-md hover:bg-yellow-700 transition"
@@ -167,7 +198,7 @@ const SignUpAws = () => {
               </button>
             </>
           )}
-
+ 
           {isCodeSent && (
             <div>
               <h2 className="text-1xl font-bold mb-1">Enter Verification Code</h2>
@@ -180,7 +211,7 @@ const SignUpAws = () => {
                 className="w-full mb-4 px-4 py-2 border-0 border-b-2 border-gray-300 focus:border-black focus:outline-none transition duration-200"
                 required
               />
-
+ 
               <button
                 type="submit"
                 onClick={handleVerificationSubmit}
@@ -190,9 +221,9 @@ const SignUpAws = () => {
               </button>
             </div>
           )}
-
+ 
           <hr className="my-4 border-gray-300" />
-
+ 
           <p className="mt-4 text-sm text-center">
             Do you have an account?{' '}
             <Link
@@ -209,5 +240,5 @@ const SignUpAws = () => {
     </div>
   );
 };
-
+ 
 export default SignUpAws;
