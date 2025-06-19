@@ -116,7 +116,7 @@ const Azure = ({ setLoggedInUser }) => {
               mode === 'signup' && isCodeSent ? handleVerifyCode :
               mode === 'signup' ? handleSignUp : handleLogin
             }
-            className="bg-white p-8 rounded-lg shadow-[0px_5px_15px_rgba(0,0,0,0.2)] w-full max-w-md"
+            className="bg-white p-8 rounded-lg shadow-[0px_5px_15px_rgba(0,0,0,0.2)] w-full max-w-sm"
           >
             <h2 className="text-2xl font-bold mb-6 text-center">
               {isForgotPassword ? 'Forgot Password' : isResetPassword ? 'Reset Password' : mode === 'signup' ? 'Sign Up' : 'Login'}

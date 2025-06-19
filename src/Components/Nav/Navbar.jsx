@@ -18,7 +18,7 @@ const Navbar = () => {
  
   // route based on platform choosed
   const isAWS = location.pathname.startsWith('/aws') || location.pathname.startsWith('/explore-courses');
-  const isAzure =location.pathname.startsWith('/azurecourses') || location.pathname.startsWith('/') ;
+  const isAzure =location.pathname.startsWith('/azurecourses') || location.pathname.startsWith('/role') ;
  
   return (
     <nav className="bg-black shadow-md px-6 py-4 flex justify-between items-center transition-all duration-500 ease-in-out">
