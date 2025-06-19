@@ -7,12 +7,12 @@ import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/autoplay";
 import aws from "../../assets/AWS-Header.png";
-import CourseTimeline from './CourseTimeline';
+import CourseTimeline from "./CourseTimeline";
 import CloudCareerPathSection from "./CareerPathSection";
 import { ArrowRight } from "lucide-react";
-import NavbarAWS from "../Nav/NavbarAWS";
 import Footer from "../Nav/Footer";
- 
+import Navbar from "../Nav/Navbar";
+
 const certifications = [
     { imageUrl: "https://d1.awsstatic.com/training-and-certification/certification-badges/AWS-Certified-Cloud-Practitioner_badge.634f8a21af2e0e956ed8905a72366146ba22b74c.png", pageUrl: "https://aws.amazon.com/certification/certified-cloud-practitioner/?ch=sec&sec=rmg&d=1" },
     { imageUrl: "https://d1.awsstatic.com/certification/badges/AWS-Certified-AI-Practitioner_badge_300x300.85cea45137696692de99a72934f6ddb81f82fc12.png", pageUrl: "https://aws.amazon.com/certification/certified-ai-practitioner/?ch=sec&sec=rmg&d=1" },
@@ -27,48 +27,42 @@ const certifications = [
     { imageUrl: "https://d1.awsstatic.com/training-and-certification/certification-badges/AWS-Certified-Machine-Learning-Specialty_badge.e5d66b56552bbf046f905bacaecef6dad0ae7180.png", pageUrl: "https://aws.amazon.com/certification/certified-machine-learning-specialty/" },
     { imageUrl: "https://d1.awsstatic.com/training-and-certification/certification-badges/AWS-Certified-Security-Specialty_badge.75ad1e505c0241bdb321f4c4d9abc51c0109c54f.png", pageUrl: "https://aws.amazon.com/certification/certified-security-specialty/" },
   ];
-   
-  export default function AwsIntro() {
-    const [showSwiper, setShowSwiper] = useState(false);
-   
-    useEffect(() => {
-      AOS.init({ duration: 1000 });
-   
-      setTimeout(() => {
-        setShowSwiper(true);
-      }, 1000);
-    }, []);
-   
-    return (
-        <div>
-            <NavbarAWS />
+
+export default function AwsIntro() {
+  const [showSwiper, setShowSwiper] = useState(false);
+
+  useEffect(() => {
+    AOS.init({ duration: 1000 });
+    const timer = setTimeout(() => setShowSwiper(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div>
+      <Navbar />
       <div className="min-h-screen bg-white text-gray-900 font-sans overflow-hidden">
-       
         <header
           className="bg-cover bg-center py-32"
           style={{ backgroundImage: `url(${aws})` }}
         >
-         
-          {!showSwiper && (
+          {!showSwiper ? (
             <div
               className="text-left text-white px-6 md:px-12 max-w-6xl"
               data-aos="fade-right"
             >
-              <h1 className="text-6xl font-bold leading-tight text-white">
+              <h1 className="text-6xl font-bold leading-tight">
                 Build your future in the AWS Cloud
               </h1>
               <p className="mt-4 text-2xl text-gray-100 max-w-2xl">
                 Explore foundational learning paths with expert-led courses
               </p>
             </div>
-          )}
-   
-          {showSwiper && (
+          ) : (
             <Swiper
               modules={[Autoplay]}
               autoplay={{ delay: 3000, disableOnInteraction: false }}
-              loop={true}
-              spaceBetween={30}  
+              loop
+              spaceBetween={30}
               slidesPerView={1}
               style={{
                 display: "flex",
@@ -79,7 +73,7 @@ const certifications = [
             >
               <SwiperSlide>
                 <div className="text-left text-white">
-                  <h1 className="text-6xl font-bold leading-tight text-white">
+                  <h1 className="text-6xl font-bold leading-tight">
                     Build your future in the AWS Cloud
                   </h1>
                   <p className="mt-4 text-2xl text-gray-100 max-w-2xl">
@@ -89,7 +83,7 @@ const certifications = [
               </SwiperSlide>
               <SwiperSlide>
                 <div className="text-left text-white">
-                  <h1 className="text-6xl font-bold leading-tight text-white">
+                  <h1 className="text-6xl font-bold leading-tight">
                     Courses Curated by AWS Experts
                   </h1>
                   <p className="mt-4 text-2xl text-gray-100 max-w-2xl">
@@ -100,71 +94,76 @@ const certifications = [
             </Swiper>
           )}
         </header>
+
         <div className="py-16 px-6 max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-[#20629b] mb-6 border-l-4 border-yellow-400 pl-4">
             Cloud Career Path
           </h2>
           <p className="text-lg text-gray-700 mb-12">
-          Begin with the Fundamentals, grow through Intermediate, master the Advanced by Starting your cloud journey today!
+            Begin with the Fundamentals, grow through Intermediate, master the
+            Advanced by starting your cloud journey today!
           </p>
-         
+           
+          {/* Course Timeline Component */}
           <div className="px-6 max-w-7xl mx-auto">
-    <CourseTimeline />
-  </div>
-   
-  <CloudCareerPathSection/>
-  <div className="text-center ">
-    <Link
-      to="/explore-courses"
-      className="inline-flex items-center justify-center gap-2 bg-[#20629b] text-white py-3 px-6 rounded-3xl text-lg font-semibold shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105  hover:animate-none"
-    >
-      Explore All Courses
-      <ArrowRight className="w-5 h-5" />
-    </Link>
-  </div>
-  </div>
-   
-   
-  <div className="py-8 px-6 max-w-7xl mx-auto">
-    <h2 className="text-3xl font-bold text-[#20629b] mb-6 border-l-4 border-yellow-400 pl-4">
-      AWS Certifications
-    </h2>
-    <p className="text-lg text-gray-700 mb-12">
-      Choose the certification badge below to learn more.
-    </p>
-    <Swiper
-      modules={[Autoplay]}
-      autoplay={{ delay: 2000, disableOnInteraction: false }}
-      loop={true}
-      spaceBetween={20}
-      breakpoints={{
-        640: { slidesPerView: 2 },
-        768: { slidesPerView: 3 },
-        1024: { slidesPerView: 4 },
-        1280: { slidesPerView: 6 }
-      }}
-    >
-      {certifications.map((cert, index) => (
-    <SwiperSlide key={index}>
-      <a
-        href={cert.pageUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block border-2 border-[#FF9900] rounded-2xl shadow-lg hover:shadow-xl transform transition-transform duration-300 hover:scale-105 bg-white p-4"
-      >
-        <img
-          src={cert.imageUrl}
-          alt={'AWS Certification ${index + 1}'}
-          className="w-full h-auto object-contain"
-        />
-      </a>
-    </SwiperSlide>
-  ))}
-   
-    </Swiper>
-            </div>
+            <CourseTimeline />
           </div>
-          <Footer />
+          
+          {/* Sectioned career journey */}
+          <CloudCareerPathSection />
+          
+          {/* Call to Action Button */}
+          <div className="text-center mt-5">
+            <Link
+              to="/explore-courses"
+              className="inline-flex items-center gap-2 bg-[#20629b] text-white py-3 px-6 rounded-3xl text-lg font-semibold shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              Explore All Courses
+              <ArrowRight className="w-5 h-5" />
+            </Link>
           </div>
-    );
-  }
+        </div>
+
+        {/* AWS Certifications Carousel */}
+        <div className="py-3 mb-8 px-6 max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-[#20629b] mb-6 border-l-4 border-yellow-400 pl-4">
+            AWS Certifications
+          </h2>
+          <p className="text-lg text-gray-700 mb-12">
+            Choose the certification badge below to learn more.
+          </p>
+          <Swiper
+            modules={[Autoplay]}
+            autoplay={{ delay: 2000, disableOnInteraction: false }}
+            loop
+            spaceBetween={20}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              768: { slidesPerView: 3 },
+              1024: { slidesPerView: 4 },
+              1280: { slidesPerView: 6 },
+            }}
+          >
+            {certifications.map((cert, index) => (
+              <SwiperSlide key={index}>
+                <a
+                  href={cert.pageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block border-2 border-[#FF9900] rounded-2xl shadow-lg hover:shadow-xl transform transition-transform duration-300 hover:scale-101 bg-white p-4"
+                >
+                  <img
+                    src={cert.imageUrl}
+                    alt={`AWS Certification ${index + 1}`}
+                    className="w-full h-auto object-contain"
+                  />
+                </a>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+}

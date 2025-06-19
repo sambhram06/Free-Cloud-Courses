@@ -10,6 +10,8 @@ import {
 import { MdPrivacyTip } from 'react-icons/md';
 import { BsRocketTakeoff } from 'react-icons/bs';
 import { AiOutlineSolution } from 'react-icons/ai';
+
+import { fetchLearnCatalog } from '../Azure/API/APICatalog';
  
 const roleIcons = {
   "administrator": <FaUserShield className="text-5xl text-sky-600" />,
@@ -50,32 +52,30 @@ const roleIcons = {
  
 export default function CareerPaths() {
   const [roles, setRoles] = useState([]);
- 
+
+  //Api data
   useEffect(() => {
-    fetch('https://learn.microsoft.com/api/learn/catalog/')
-      .then(res => res.json())
+    fetchLearnCatalog()
       .then(data => {
         const allRoles = data.learningPaths.flatMap(lp => lp.roles).filter(Boolean);
-        const uniqueRoles = Array.from(new Set(allRoles));
-        const sortedRoles = uniqueRoles.sort((a, b) => a.localeCompare(b));
-        setRoles(sortedRoles);
+        const uniqueRoles = Array.from(new Set(allRoles)).sort((a, b) => a.localeCompare(b));
+        setRoles(uniqueRoles);
       })
       .catch(error => {
         console.error('Error fetching role data:', error);
       });
   }, []);
- 
-  const formatRoleLabel = (role) => {
-    return role
+
+  const formatRoleLabel = (role) =>
+    role
       .split('-')
       .map(word => {
         const lower = word.toLowerCase();
-        if (lower === 'ai') return 'AI';
-        if (lower === 'ip') return 'IP';
+        if (lower === 'ai' || lower === 'ip') return lower.toUpperCase();
         return word.charAt(0).toUpperCase() + word.slice(1);
       })
       .join(' ');
-  };
+
  
   return (
     <div className="p-6 max-w-7xl mx-auto">

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import 'animate.css';
-import { Link } from 'react-router-dom';
- 
 import heroImg1 from "../Azure/assets/HeroBgAz4.avif";
 import heroImg2 from "../Azure/assets/HeroBgAz.avif";
 import heroImg3 from "../Azure/assets/HeroBg2.avif";

@@ -7,8 +7,6 @@
     position: relative;
   }
    
-   
-   
   .flip-card-inner {
     position: relative;
     width: 100%;
@@ -32,8 +30,7 @@
     background-color: #fff;
     padding: 1rem;
     box-sizing: border-box;
-    border-bottom: 5px solid #1995FF;
-   
+    border-bottom: 3px solid #20629b;
    
   }
   .flip-card:hover {
