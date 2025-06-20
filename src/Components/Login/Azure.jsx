@@ -1,35 +1,38 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Footer from '../Nav/Footer';
-import { CognitoUserPool, CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
+import { Link, useNavigate } from 'react-router-dom';
+import { CognitoUser, AuthenticationDetails, CognitoUserPool } from 'amazon-cognito-identity-js';
 import { poolData } from '../awsConfig';
 import Navbar from '../Nav/Navbar';
+import Footer from '../Nav/Footer';
 
 const Azure = ({ setLoggedInUser }) => {
-  const [mode, setMode] = useState('login');
+  const navigate = useNavigate();
+
+  const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [isResetPassword, setIsResetPassword] = useState(false);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
+
     const userPool = new CognitoUserPool(poolData);
-    const userData = { Username: email, Pool: userPool };
     const authDetails = new AuthenticationDetails({ Username: email, Password: password });
-    const cognitoUser = new CognitoUser(userData);
+    const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
 
     cognitoUser.authenticateUser(authDetails, {
       onSuccess: (result) => {
@@ -37,7 +40,7 @@ const Azure = ({ setLoggedInUser }) => {
         setEmail(userEmail);
         setLoggedInUser(userEmail);
         localStorage.setItem('useremail', JSON.stringify(userEmail));
-        window.location.href = '/azurecourses';
+        window.location.href = "/azurecourses";
       },
       onFailure: (err) => setError(err.message || 'Login failed'),
     });
@@ -46,55 +49,69 @@ const Azure = ({ setLoggedInUser }) => {
   const handleForgotPassword = (e) => {
     e.preventDefault();
     setError('');
-    const userPool = new CognitoUserPool(poolData);
-    const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+    setSuccess(false);
+
+    const cognitoUser = new CognitoUser({ Username: email, Pool: new CognitoUserPool(poolData) });
     cognitoUser.forgotPassword({
       onSuccess: () => {
         setSuccess(true);
         setIsResetPassword(true);
         setIsForgotPassword(false);
       },
-      onFailure: (err) => setError(err.message || 'Error sending code'),
+      onFailure: (err) => setError(err.message || 'Error sending password reset code'),
     });
   };
 
   const handleResetPassword = (e) => {
-    e.preventDefault();
-    setError('');
-    const userPool = new CognitoUserPool(poolData);
-    const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
-    cognitoUser.confirmPassword(verificationCode, newPassword, {
-      onSuccess: () => setIsResetPassword(false),
-      onFailure: (err) => setError(err.message || 'Reset failed'),
-    });
+  e.preventDefault();
+  setError('');
+  setSuccess(false);
+
+  const cognitoUser = new CognitoUser({ Username: email, Pool: new CognitoUserPool(poolData) });
+  cognitoUser.confirmPassword(verificationCode, newPassword, {
+    onSuccess: () => {
+      setSuccess(true);
+      setIsResetPassword(false);
+      setIsForgotPassword(false);
+      setIsLogin(true);
+    },
+    onFailure: (err) => setError(err.message || 'Error resetting password'),
+  });
+};
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSignUp = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) return setError('Passwords do not match');
+    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
+
     const userPool = new CognitoUserPool(poolData);
     userPool.signUp(
-      email,
-      password,
+      formData.email,
+      formData.password,
       [
-        { Name: 'email', Value: email },
-        { Name: 'name', Value: name },
+        { Name: 'email', Value: formData.email },
+        { Name: 'name', Value: formData.name },
       ],
       null,
-      (err, result) => {
-        if (err) return setError(err.message);
+      (err) => {
+        if (err) return setError(err.message || 'Signup failed');
         setSubmitted(true);
         setIsCodeSent(true);
       }
     );
   };
 
-  const handleVerifyCode = (e) => {
+  const handleVerificationSubmit = (e) => {
     e.preventDefault();
     const userPool = new CognitoUserPool(poolData);
-    const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+    const cognitoUser = new CognitoUser({ Username: formData.email, Pool: userPool });
     cognitoUser.confirmRegistration(verificationCode, true, (err) => {
-      if (err) return setError(err.message);
+      if (err) return setError(err.message || 'Verification failed');
+      setIsVerified(true);
       navigate('/loginazure');
     });
   };
@@ -102,156 +119,63 @@ const Azure = ({ setLoggedInUser }) => {
   return (
     <div>
       <Navbar />
-      <div
-        className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col"
-        style={{
-          backgroundImage: `url('https://logincdn.msauth.net/shared/5/images/fluent_web_light_57fee22710b04cebe1d5.svg')`,
-        }}
-      >
+      <div className="min-h-screen bg-cover bg-center flex flex-col" style={{ backgroundImage: `url('https://logincdn.msauth.net/shared/5/images/fluent_web_light_57fee22710b04cebe1d5.svg')` }}>
         <div className="flex items-center justify-center pt-20">
-          <form
-            onSubmit={
-              isForgotPassword ? handleForgotPassword :
-              isResetPassword ? handleResetPassword :
-              mode === 'signup' && isCodeSent ? handleVerifyCode :
-              mode === 'signup' ? handleSignUp : handleLogin
-            }
-            className="bg-white p-8 rounded-lg shadow-[0px_5px_15px_rgba(0,0,0,0.2)] w-full max-w-sm"
-          >
-            <h2 className="text-2xl font-bold mb-6 text-center">
-              {isForgotPassword ? 'Forgot Password' : isResetPassword ? 'Reset Password' : mode === 'signup' ? 'Sign Up' : 'Login'}
-            </h2>
-
-            {submitted && <p className="text-green-600 mb-4 text-center">Signup successful! Check your email for verification code.</p>}
-            {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-            {success && <p className="text-green-600 mb-4 text-center">Success!</p>}
-
-            {isForgotPassword || isResetPassword ? null : mode === 'signup' && !isCodeSent && (
-              <>
-                <h2 className="text-1xl font-bold">Username</h2>
-                <input
-                  type="text"
-                  placeholder="Enter Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
-                  required
-                />
-              </>
-            )}
-
-            {(mode === 'login' || isForgotPassword || isResetPassword || mode === 'signup') && (
-              <>
-                <h2 className="text-1xl font-bold">Email</h2>
-                <input
-                  type="email"
-                  placeholder="Enter Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
-                  required
-                />
-              </>
-            )}
-
-            {isResetPassword ? (
-              <>
-                <h2 className="text-1xl font-bold">Verification Code</h2>
-                <input
-                  type="text"
-                  placeholder="Code"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
-                  required
-                />
-                <h2 className="text-1xl font-bold">New Password</h2>
-                <input
-                  type="password"
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
-                  required
-                />
-              </>
-            ) : mode === 'signup' && isCodeSent ? (
-              <>
-                <h2 className="text-1xl font-bold">Verification Code</h2>
-                <input
-                  type="text"
-                  placeholder="Enter code"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
-                  required
-                />
-              </>
-            ) : (
-              <>
-                <h2 className="text-1xl font-bold">Password</h2>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
-                  required
-                />
-                {mode === 'signup' && (
-                  <>
-                    <h2 className="text-1xl font-bold">Confirm Password</h2>
-                    <input
-                      type="password"
-                      placeholder="Confirm Password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
-                      required
-                    />
-                  </>
-                )}
-              </>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700 transition"
-            >
-              {isForgotPassword ? 'Send Code' : isResetPassword ? 'Reset Password' : mode === 'signup' && isCodeSent ? 'Verify Email' : mode === 'signup' ? 'Sign Up' : 'Login'}
-            </button>
-
-            <hr className="my-4 border-gray-300" />
-
-            {!isForgotPassword && !isResetPassword && (
-              <>
-                {mode === 'login' && (
-                  <p
-                    onClick={() => setIsForgotPassword(true)}
-                    className="mt-2 text-sm text-center text-blue-600 cursor-pointer"
-                  >
-                    Forgot Password?
-                  </p>
-                )}
-                <p className="mt-2 text-sm text-center">
-                  {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode(mode === 'login' ? 'signup' : 'login');
-                      setError('');
-                      setIsCodeSent(false);
-                      setIsForgotPassword(false);
-                      setIsResetPassword(false);
-                    }}
-                    className="text-blue-600 font-bold"
-                  >
-                    {mode === 'login' ? 'Sign Up' : 'Login'}
-                  </button>
-                </p>
-              </>
-            )}
-          </form>
+          {isLogin ? (!isForgotPassword && !isResetPassword ? (
+            <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+              <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+              <h2 className="text-1xl font-bold">Email</h2>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+              <h2 className="text-1xl font-bold">Password</h2>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+              {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
+              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700">Login</button>
+              <p onClick={() => setIsForgotPassword(true)} className="mt-4 text-sm text-center text-blue-600 cursor-pointer">Forgot Password?</p>
+              <p className="mt-4 text-sm text-center">Don't have an account? <span onClick={() => setIsLogin(false)} className="cursor-pointer font-bold text-blue-600">Sign Up</span></p>
+            </form>
+          ) : isForgotPassword ? (
+            <form onSubmit={handleForgotPassword} className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+              <h2 className="text-2xl font-bold mb-6 text-center">Forgot Password</h2>
+              <h2 className="text-1xl font-bold">Email</h2>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700">Send Code</button>
+            </form>
+          ) : (
+            <form onSubmit={handleResetPassword} className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+              <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
+              <h2 className="text-1xl font-bold">Verification Code</h2>
+              <input type="text" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} placeholder="Verification code" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+              <h2 className="text-1xl font-bold">New Password</h2>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700">Reset Password</button>
+            </form>
+          )) : (
+            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+              <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
+              {submitted && <p className="text-green-600 text-center mb-4">Signup successful! Check your email for the code.</p>}
+              {error && <p className="text-red-600 text-center mb-4">{error}</p>}
+              {!isCodeSent ? (
+                <>
+                  <h2 className="text-1xl font-bold">Username</h2>
+                  <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Username" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+                  <h2 className="text-1xl font-bold">Email</h2>
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+                  <h2 className="text-1xl font-bold">Password</h2>
+                  <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Password" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+                  <h2 className="text-1xl font-bold">Confirm Password</h2>
+                  <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+                  <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700">Sign Up</button>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-1xl font-bold">Verification Code</h2>
+                  <input type="text" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} placeholder="Verification code" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
+                  <button onClick={handleVerificationSubmit} className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700">Verify Email</button>
+                </>
+              )}
+              <p className="mt-4 text-sm text-center">Already have an account? <span onClick={() => setIsLogin(true)} className="cursor-pointer font-bold text-blue-600">Login</span></p>
+            </form>
+          )}
         </div>
       </div>
       <Footer />

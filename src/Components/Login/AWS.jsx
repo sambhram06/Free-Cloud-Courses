@@ -62,15 +62,20 @@ const AWS = ({ setLoggedInUser }) => {
     };
  
     const handleResetPassword = (e) => {
-        e.preventDefault();
-        setError('');
-        setSuccess(false);
- 
-        const cognitoUser = new CognitoUser({ Username: email, Pool: new CognitoUserPool(poolData) });
-        cognitoUser.confirmPassword(verificationCode, newPassword, {
-            onSuccess: () => setSuccess(true),
-            onFailure: (err) => setError(err.message || 'Error resetting password'),
-        });
+      e.preventDefault();
+      setError('');
+      setSuccess(false);
+    
+      const cognitoUser = new CognitoUser({ Username: email, Pool: new CognitoUserPool(poolData) });
+      cognitoUser.confirmPassword(verificationCode, newPassword, {
+        onSuccess: () => {
+          setSuccess(true);
+          setIsResetPassword(false);
+          setIsForgotPassword(false);
+          setIsLogin(true);
+        },
+        onFailure: (err) => setError(err.message || 'Error resetting password'),
+      });
     };
  
     const handleChange = (e) => {
@@ -148,7 +153,7 @@ const AWS = ({ setLoggedInUser }) => {
                             <button type="submit" className="w-full bg-yellow-600 text-black font-bold py-2 rounded-md hover:bg-yellow-700 transition">Reset Password</button>
                         </form>
                     )) : (
-                        <form onSubmit={handleSubmit} className="bg-white shadow-md p-8 rounded-lg w-full max-w-md">
+                        <form onSubmit={handleSubmit} className="bg-white shadow-md p-8 rounded-lg w-full max-w-sm">
                             <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
                             <h2 className="text-1xl font-bold">Username</h2>
                             <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Username" required className="w-full mb-2 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
