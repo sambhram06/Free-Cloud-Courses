@@ -12,8 +12,10 @@ const Azure = ({ setLoggedInUser }) => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [signUpVerificationCode, setSignUpVerificationCode] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -63,21 +65,21 @@ const Azure = ({ setLoggedInUser }) => {
   };
 
   const handleResetPassword = (e) => {
-  e.preventDefault();
-  setError('');
-  setSuccess(false);
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
 
-  const cognitoUser = new CognitoUser({ Username: email, Pool: new CognitoUserPool(poolData) });
-  cognitoUser.confirmPassword(verificationCode, newPassword, {
-    onSuccess: () => {
-      setSuccess(true);
-      setIsResetPassword(false);
-      setIsForgotPassword(false);
-      setIsLogin(true);
-    },
-    onFailure: (err) => setError(err.message || 'Error resetting password'),
-  });
-};
+    const cognitoUser = new CognitoUser({ Username: email, Pool: new CognitoUserPool(poolData) });
+    cognitoUser.confirmPassword(verificationCode, newPassword, {
+      onSuccess: () => {
+        setSuccess(true);
+        setIsResetPassword(false);
+        setIsForgotPassword(false);
+        setIsLogin(true);
+      },
+      onFailure: (err) => setError(err.message || 'Error resetting password'),
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -109,10 +111,19 @@ const Azure = ({ setLoggedInUser }) => {
     e.preventDefault();
     const userPool = new CognitoUserPool(poolData);
     const cognitoUser = new CognitoUser({ Username: formData.email, Pool: userPool });
-    cognitoUser.confirmRegistration(verificationCode, true, (err) => {
-      if (err) return setError(err.message || 'Verification failed');
+
+    cognitoUser.confirmRegistration(signUpVerificationCode, true, (err) => {
+      if (err) {
+        setError(err.message || 'Verification failed');
+        return;
+      }
+
       setIsVerified(true);
-      navigate('/loginazure');
+
+      setTimeout(() => {
+        navigate('/loginazure');
+        window.location.reload();
+      }, 0);
     });
   };
 
@@ -152,7 +163,7 @@ const Azure = ({ setLoggedInUser }) => {
           )) : (
             <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
               <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
-              {submitted && <p className="text-green-600 text-center mb-4">Signup successful! Check your email for the code.</p>}
+              {/* {submitted && <p className="text-green-600 text-center mb-4">Signup successful! Check your email for the code.</p>} */}
               {error && <p className="text-red-600 text-center mb-4">{error}</p>}
               {!isCodeSent ? (
                 <>
@@ -168,10 +179,25 @@ const Azure = ({ setLoggedInUser }) => {
                 </>
               ) : (
                 <>
+                  <h2 className="text-2xl font-bold mb-6 text-center">Email Verification</h2>
+
                   <h2 className="text-1xl font-bold">Verification Code</h2>
-                  <input type="text" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} placeholder="Verification code" required className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none" />
-                  <button onClick={handleVerificationSubmit} className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700">Verify Email</button>
+                  <input
+                    type="text"
+                    value={signUpVerificationCode}
+                    onChange={(e) => setSignUpVerificationCode(e.target.value)}
+                    placeholder="Verification code"
+                    required
+                    className="w-full mb-4 px-4 py-2 border-b-2 border-gray-300 focus:border-black focus:outline-none"
+                  />
+                  <button
+                    onClick={handleVerificationSubmit}
+                    className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Verify Email
+                  </button>
                 </>
+
               )}
               <p className="mt-4 text-sm text-center">Already have an account? <span onClick={() => setIsLogin(true)} className="cursor-pointer font-bold text-blue-600">Login</span></p>
             </form>

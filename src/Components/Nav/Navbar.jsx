@@ -8,15 +8,20 @@ const Navbar = () => {
   const location = useLocation();
  
   const handleLogout = () => {
-    logout();
-    localStorage.clear();
-    navigate('/');
-  };
+  logout(); 
+  localStorage.removeItem('user');
+  localStorage.setItem('googleReLogin', 'true'); 
+  const clientId = '6877ph5ofmlnpo8tetot0bguut';
+  const logoutRedirectUri = 'https://d21a3j72wk3f7t.cloudfront.net/';
+
+  const logoutUrl = `https://ap-south-1iqxuzzcbn.auth.ap-south-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutRedirectUri)}`;
+
+  window.location.href = logoutUrl;
+};
  
-  const email = user?.email || JSON.parse(localStorage.getItem('useremail'));
-  const name = localStorage.getItem('username') || email;
+const email = user?.email || JSON.parse(localStorage.getItem('user'))?.email;
+const name = user?.username || JSON.parse(localStorage.getItem('user'))?.username || email;
  
-  // route based on platform choosed
   const isAWS = location.pathname.startsWith('/aws') || location.pathname.startsWith('/explore-courses');
   const isAzure =location.pathname.startsWith('/azurecourses') || location.pathname.startsWith('/role') ;
  
@@ -47,7 +52,7 @@ const Navbar = () => {
         <div className="text-white flex items-center gap-6 ml-8">
           {user ? (
             <>
-              <span className="font-semibold">{name}</span>
+              <span className="font-semibold">{email}</span>
               <button
                 onClick={handleLogout}
                 className="text-white font-bold hover:text-[#D3D3D3] transition"
